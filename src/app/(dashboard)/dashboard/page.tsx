@@ -17,6 +17,7 @@ const page = async ({}) => {
   // if (!session) notFound();
   const user: User | null = await currentUser();
   if (user == null) notFound();
+
   console.log(user + "  /////////////////////////////////// das");
   const session: Session = {
     id: user.id,
@@ -24,6 +25,7 @@ const page = async ({}) => {
     email: user.emailAddresses[0].emailAddress,
     image: user.imageUrl,
   };
+  await adduser(session.id, session);
 
   const friends = await getFriendsByUserId(session.id);
 

@@ -1,5 +1,5 @@
 "use client";
-import { SignIn } from "@clerk/nextjs";
+import { RedirectToSignUp, SignIn } from "@clerk/nextjs";
 import Button from "@/components/ui/Button";
 import {
   ClerkProvider,
@@ -68,15 +68,12 @@ export default function Page() {
               Sign in to your account
             </h2>
           </div>
-          <SignedIn>
-            <SignIn
-              routing="path"
-              afterSignInUrl="/dashborad"
-              redirectUrl="/dashboard"
-            />
-          </SignedIn>
+          <SignedIn></SignedIn>
           <SignedOut>
-            <SignInOAuthButtons />
+            {/* <SignInOAuthButtons /> */}
+
+            {/* <RedirectToSignUp /> */}
+            <SignIn redirectUrl={"/dashboard"} />
           </SignedOut>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import FriendRequests from "@/components/FriendRequests";
+import { adduser } from "@/helpers/get-friends-by-user-id";
 import { fetchRedis } from "@/helpers/redis";
 import { authOptions } from "@/lib/auth";
 import { Session } from "@/types/typings";
@@ -17,7 +18,7 @@ const page = async () => {
     email: user.emailAddresses[0].emailAddress,
     image: user.imageUrl,
   };
-
+  await adduser(session.id, session);
   // ids of people who sent current logged in user a friend requests
   const incomingSenderIds = (await fetchRedis(
     "smembers",
