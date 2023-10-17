@@ -1,11 +1,35 @@
 "use client";
 
+import { fetchRedis } from "@/helpers/redis";
 import { pusherClient } from "@/lib/pusher";
 import { cn, toPusherKey } from "@/lib/utils";
-import { Message } from "@/lib/validations/message";
+import { Message, messageArrayValidator } from "@/lib/validations/message";
 import { format } from "date-fns";
 import Image from "next/image";
+import { notFound } from "next/navigation";
 import { FC, useEffect, useRef, useState } from "react";
+
+async function getChatMessages(chatId: string) {
+  try {
+    console.log(chatId + "  chatId");
+    console.log("inside getting message");
+    const results: string[] = await fetchRedis(
+      "zrange",
+      "result",
+      `chat:${chatId}:messages`,
+      0,
+      -1
+    );
+    console.log(" having messages");
+    const dbMessages = results.map((message) => JSON.parse(message) as Message);
+
+    const reversedDbMessages = dbMessages.reverse();
+
+    const messages = messageArrayValidator.parse(reversedDbMessages);
+
+    return messages;
+  } catch (error) {}
+}
 
 interface MessagesProps {
   initialMessages: Message[];
@@ -23,7 +47,7 @@ const Messages: FC<MessagesProps> = ({
   sessionImg,
 }) => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
-  console.log(messages + " messahge");
+  console.log(JSON.stringify(messages) + " messahge");
   useEffect(() => {
     pusherClient.subscribe(toPusherKey(`chat:${chatId}`));
 
@@ -39,6 +63,14 @@ const Messages: FC<MessagesProps> = ({
       pusherClient.unbind("incoming-message", messageHandler);
     };
   }, [chatId]);
+
+  // useEffect(() => {
+  //   async function getMessage() {
+  //     const message: Message[] = await getChatMessages(chatId);
+  //     setMessages((s) => message);
+  //   }
+  //   getMessage();
+  // }, []);
 
   const scrollDownRef = useRef<HTMLDivElement | null>(null);
 

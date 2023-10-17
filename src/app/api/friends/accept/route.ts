@@ -28,6 +28,7 @@ export async function POST(req: Request) {
     // verify both users are not already friends
     const isAlreadyFriends = await fetchRedis(
       "sismember",
+      "isAlreadyFriend",
       `user:${session.id}:friends`,
       idToAdd
     );
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
 
     const hasFriendRequest = await fetchRedis(
       "sismember",
+      "hasFriend",
       `user:${session.id}:incoming_friend_requests`,
       idToAdd
     );
@@ -47,8 +49,8 @@ export async function POST(req: Request) {
     }
 
     const [userRaw, friendRaw] = (await Promise.all([
-      fetchRedis("get", `user:${session.id}`),
-      fetchRedis("get", `user:${idToAdd}`),
+      fetchRedis("get", "userRaw", `user:${session.id}`),
+      fetchRedis("get", "friendRaw", `user:${idToAdd}`),
     ])) as [string, string];
 
     const users = JSON.parse(userRaw) as Session;

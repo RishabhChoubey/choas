@@ -31,6 +31,7 @@ export async function generateMetadata({
   const chatPartnerId = session.id === userId1 ? userId2 : userId1;
   const chatPartnerRaw = (await fetchRedis(
     "get",
+    "chatPaternerRaw",
     `user:${chatPartnerId}`
   )) as string;
   const chatPartner = JSON.parse(chatPartnerRaw) as Session;
@@ -50,6 +51,7 @@ async function getChatMessages(chatId: string) {
     console.log("inside getting message");
     const results: string[] = await fetchRedis(
       "zrange",
+      "chatMessage",
       `chat:${chatId}:messages`,
       0,
       -1
@@ -71,7 +73,7 @@ const page = async ({ params }: PageProps) => {
   const { chatId } = params;
   const user: User | null = await currentUser();
   if (user == null) notFound();
-  console.log(user + "  ///////////////////////////////////");
+  console.log("  in pAge parter  " + user.emailAddresses[0].emailAddress);
   const session: Session = {
     id: user.id,
     name: user.firstName,
@@ -90,11 +92,13 @@ const page = async ({ params }: PageProps) => {
 
   const chatPartnerRaw = (await fetchRedis(
     "get",
+    "chatRawPartner",
     `user:${chatPartnerId}`
   )) as string;
+  console.log("chat rasw    " + chatPartnerRaw);
   const chatPartner = JSON.parse(chatPartnerRaw) as Session;
   const initialMessages = await getChatMessages(chatId);
-  revalidateTag("revalidate");
+
   return (
     <div className="flex-1 shadow-shadow_rght w-full justify-between flex flex-col h-full max-h-[calc(100vh)] md:max-h-[calc(100vh)] dark:text-white dark:bg-slate-800">
       <div className="flex shadow-shadow_rght sm:items-center justify-between py-3 border-b-2 border-gray-200 dark:text-white dark:bg-slate-800">

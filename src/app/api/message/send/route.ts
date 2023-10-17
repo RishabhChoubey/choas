@@ -8,6 +8,7 @@ import { nanoid } from "nanoid";
 import { currentUser } from "@clerk/nextjs";
 import type { User } from "@clerk/nextjs/api";
 import { Session } from "@/types/typings";
+import { revalidateTag } from "next/cache";
 export async function POST(req: Request) {
   try {
     const { text, chatId }: { text: string; chatId: string } = await req.json();
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
 
     const friendList = (await fetchRedis(
       "smembers",
+      "friendList",
       `user:${session.id}:friends`
     )) as string[];
     const isFriend = friendList.includes(friendId);
@@ -40,7 +42,11 @@ export async function POST(req: Request) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const rawSender = (await fetchRedis("get", `user:${session.id}`)) as string;
+    const rawSender = (await fetchRedis(
+      "get",
+      "rawSender",
+      `user:${session.id}`
+    )) as string;
     const sender = JSON.parse(rawSender) as Session;
 
     const timestamp = Date.now();
@@ -76,7 +82,8 @@ export async function POST(req: Request) {
       score: timestamp,
       member: JSON.stringify(message),
     });
-
+    revalidateTag("chatMessage");
+    revalidateTag("lastMessage");
     return new Response("OK");
   } catch (error) {
     if (error instanceof Error) {

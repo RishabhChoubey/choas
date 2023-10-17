@@ -10,6 +10,7 @@ import { toPusherKey } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { Session } from "@/types/typings";
 import { adduser, getFriendsByUserId } from "@/helpers/get-friends-by-user-id";
+import { date } from "zod";
 
 const page = async ({}) => {
   // const session = await getServerSession(authOptions);
@@ -17,7 +18,7 @@ const page = async ({}) => {
   // if (!session) notFound();
   const user: User | null = await currentUser();
   if (user == null) notFound();
-
+  console.log(Date() + "  in dashboard page");
   console.log(user + "  /////////////////////////////////// das");
   const session: Session = {
     id: user.id,
@@ -28,27 +29,33 @@ const page = async ({}) => {
   await adduser(session.id, session);
 
   const friends = await getFriendsByUserId(session.id);
+  const getLastMesaage = async () => {
+    console.log(" zrange message");
+    const friendsWithLastMessage = await Promise.all(
+      friends.map(async (friend) => {
+        console.log(JSON.stringify(friend) + "  frienf");
+        const [lastMessageRaw] = (await fetchRedis(
+          "zrange",
+          "lastMessage",
+          `chat:${chatHrefConstructor(session.id, friend.id)}:messages`,
+          -1,
+          -1
+        )) as string[];
+        console.log(lastMessageRaw + "   mmmms");
+        const lastMessage = lastMessageRaw
+          ? (JSON.parse(lastMessageRaw) as Message)
+          : undefined;
 
-  const friendsWithLastMessage = await Promise.all(
-    friends.map(async (friend) => {
-      console.log(JSON.stringify(friend) + "  frienf");
-      const [lastMessageRaw] = (await fetchRedis(
-        "zrange",
-        `chat:${chatHrefConstructor(session.id, friend.id)}:messages`,
-        -1,
-        -1
-      )) as string[];
-      console.log(lastMessageRaw + "   mmmms");
-      const lastMessage = lastMessageRaw
-        ? (JSON.parse(lastMessageRaw) as Message)
-        : undefined;
+        return {
+          ...friend,
+          lastMessage,
+        };
+      })
+    );
 
-      return {
-        ...friend,
-        lastMessage,
-      };
-    })
-  );
+    return friendsWithLastMessage;
+  };
+  const friendsWithLastMessage = await getLastMesaage();
 
   return (
     <div className="container py-12 ml-2">

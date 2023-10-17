@@ -60,7 +60,6 @@ const Layout = async ({ children }: LayoutProps) => {
     image: user.imageUrl,
   };
 
-  adduser(session.id, session);
   const friends = await getFriendsByUserId(user.id);
 
   console.log("friends", friends);
@@ -68,6 +67,7 @@ const Layout = async ({ children }: LayoutProps) => {
   const unseenRequestCount = (
     (await fetchRedis(
       "smembers",
+      "unseen",
       `user:${user.id}:incoming_friend_requests`
     )) as Session[]
   ).length;
